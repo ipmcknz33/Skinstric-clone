@@ -101,7 +101,9 @@ export default function CameraPage() {
     } catch (error: any) {
       console.error("openCamera failed:", error);
       setCameraError(
-        `${error?.name || "CameraError"}: ${error?.message || "Unable to access camera"}`,
+        `${error?.name || "CameraError"}: ${
+          error?.message || "Unable to access camera"
+        }`,
       );
       setStep("error");
     }
@@ -178,8 +180,10 @@ export default function CameraPage() {
     reader.readAsDataURL(file);
   }
 
+  const showCameraUi = step === "camera" || !!capturedImage;
+
   return (
-    <main className="relative h-screen overflow-hidden bg-[#cfcfcb] text-white">
+    <main className="relative h-[100dvh] w-screen overflow-hidden overscroll-none bg-[#f4f4f2]">
       {!capturedImage && (
         <video
           ref={videoRef}
@@ -203,13 +207,7 @@ export default function CameraPage() {
         />
       )}
 
-      <div
-        className={`absolute inset-0 ${
-          step === "camera" || capturedImage
-            ? "bg-[#cfcfcb]/72"
-            : "bg-[#cfcfcb]"
-        }`}
-      />
+      {!showCameraUi && <div className="absolute inset-0 bg-[#cfcfcb]" />}
 
       <header className="absolute left-0 top-0 z-20 flex w-full items-start justify-between px-3 py-2">
         <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-white/85">
@@ -218,40 +216,54 @@ export default function CameraPage() {
         </div>
       </header>
 
-      {(step === "camera" || capturedImage) && (
+      {showCameraUi && (
         <>
-          <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-            <div className="relative h-[420px] w-[280px] md:h-[520px] md:w-[360px]">
-              <svg
-                viewBox="0 0 360 520"
-                className="h-full w-full"
+          {/* Grey overlay with clear oval hole */}
+          <div className="pointer-events-none absolute inset-0 z-10">
+            <svg
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+              className="absolute inset-0 h-full w-full"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <defs>
+                <mask id="screen-oval-hole">
+                  <rect width="100" height="100" fill="grey" />
+                  <ellipse cx="50" cy="50" rx="13.5" ry="33" fill="black" />
+                </mask>
+              </defs>
+
+              <rect
+                width="100"
+                height="100"
+                fill="rgba(207,207,203,0.72)"
+                mask="url(#screen-oval-hole)"
+              />
+
+              <ellipse
+                cx="50"
+                cy="50"
+                rx="13.5"
+                ry="33"
                 fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <ellipse
-                  cx="180"
-                  cy="260"
-                  rx="155"
-                  ry="205"
-                  stroke="rgba(255,255,255,0.95)"
-                  strokeWidth="1.5"
-                />
-              </svg>
+                stroke="rgba(255,255,255,0.95)"
+                strokeWidth="0.18"
+              />
+            </svg>
 
-              <div className="absolute left-1/2 top-[92px] -translate-x-1/2 text-center">
-                <p className="text-[11px] font-normal uppercase tracking-[0.04em] text-white">
-                  Place your head in an elipse
-                </p>
-              </div>
-
-              {countdown !== null && countdown > 0 && (
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                  <div className="text-[72px] font-light leading-none text-white/90">
-                    {countdown}
-                  </div>
-                </div>
-              )}
+            <div className="absolute left-1/2 top-[92px] -translate-x-1/2 text-center">
+              <p className="text-[11px] font-normal uppercase tracking-[0.04em] text-white">
+                Place your head in an elipse
+              </p>
             </div>
+
+            {countdown !== null && countdown > 0 && (
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                <div className="text-[72px] font-light leading-none text-white/90">
+                  {countdown}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="absolute bottom-10 left-1/2 z-20 -translate-x-1/2 text-center">

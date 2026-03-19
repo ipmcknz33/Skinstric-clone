@@ -172,10 +172,10 @@ export default function TestPage() {
   };
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#f4f4f2] text-black">
+    <main className="relative h-[100dvh] w-full overflow-hidden bg-[#f4f4f2] text-black">
       <div
         ref={pageRef}
-        className="relative min-h-screen overflow-hidden px-3 py-2 md:px-3 md:py-2"
+        className="relative h-full overflow-hidden px-3 py-2 md:px-3 md:py-2"
       >
         <header className="absolute left-0 top-0 z-30 flex w-full items-start justify-between px-3 py-2">
           <div className="text-[11px] font-semibold uppercase tracking-[0.06em]">
@@ -188,7 +188,7 @@ export default function TestPage() {
           </button>
         </header>
 
-        <div ref={contentRef} className="relative min-h-screen">
+        <div ref={contentRef} className="relative h-full">
           <div className="absolute left-3 top-[46px] z-20">
             <p className="text-[12px] font-semibold uppercase tracking-[0.01em] text-black">
               To Start Analysis
@@ -212,7 +212,7 @@ export default function TestPage() {
             </div>
           </div>
 
-          <section className="relative z-10 flex min-h-screen items-center justify-center">
+          <section className="relative z-10 flex h-full items-center justify-center">
             <div
               ref={panelRef}
               className="flex w-full max-w-[980px] flex-col items-center justify-center px-4"
