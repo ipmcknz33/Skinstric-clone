@@ -1,3 +1,4 @@
+// app/camera/page.tsx
 "use client";
 
 import Image from "next/image";
@@ -20,6 +21,7 @@ export default function CameraPage() {
   const [timerMode, setTimerMode] = useState<0 | 3 | 10>(0);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [cameraError, setCameraError] = useState<string>("");
+  const [showGreatShot, setShowGreatShot] = useState(false);
 
   useEffect(() => {
     const approved = localStorage.getItem("skinstricCameraApproved");
@@ -66,6 +68,9 @@ export default function CameraPage() {
   async function openCamera() {
     try {
       stopCurrentStream();
+      setCapturedImage(null);
+      setCountdown(null);
+      setShowGreatShot(false);
       setCameraError("");
       setStep("loading");
 
@@ -130,6 +135,7 @@ export default function CameraPage() {
 
     const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
     setCapturedImage(dataUrl);
+    setShowGreatShot(true);
 
     try {
       localStorage.setItem("skinstricCapturedImage", dataUrl);
@@ -138,6 +144,8 @@ export default function CameraPage() {
 
   function handleTakePicture() {
     if (step !== "camera" || countdown !== null || capturedImage) return;
+
+    setShowGreatShot(false);
 
     if (timerMode === 0) {
       captureStill();
@@ -148,11 +156,11 @@ export default function CameraPage() {
   }
 
   function handleRetake() {
-    setCapturedImage(null);
-    setCountdown(null);
+    void openCamera();
   }
 
   function handleProceed() {
+    stopCurrentStream();
     router.push("/analysis");
   }
 
@@ -171,6 +179,7 @@ export default function CameraPage() {
       if (!result) return;
 
       setCapturedImage(result);
+      setShowGreatShot(true);
 
       try {
         localStorage.setItem("skinstricCapturedImage", result);
@@ -181,6 +190,8 @@ export default function CameraPage() {
   }
 
   const showCameraUi = step === "camera" || !!capturedImage;
+  const showTimerBar = !capturedImage;
+  const showCountdown = countdown !== null && countdown > 0;
 
   return (
     <main className="relative h-[100dvh] w-screen overflow-hidden overscroll-none bg-[#f4f4f2]">
@@ -218,7 +229,6 @@ export default function CameraPage() {
 
       {showCameraUi && (
         <>
-          {/* Grey overlay with clear oval hole */}
           <div className="pointer-events-none absolute inset-0 z-10">
             <svg
               viewBox="0 0 100 100"
@@ -251,17 +261,43 @@ export default function CameraPage() {
               />
             </svg>
 
-            <div className="absolute left-1/2 top-[92px] -translate-x-1/2 text-center">
-              <p className="text-[11px] font-normal uppercase tracking-[0.04em] text-white">
-                Place your head in an elipse
-              </p>
-            </div>
-
-            {countdown !== null && countdown > 0 && (
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                <div className="text-[72px] font-light leading-none text-white/90">
-                  {countdown}
+            {showCountdown && (
+              <div className="absolute left-1/2 top-[132px] -translate-x-1/2 text-center text-white">
+                <div className="flex items-end justify-center gap-3">
+                  <span
+                    className={`text-[18px] font-light leading-none ${
+                      countdown === 3 ? "opacity-100" : "opacity-45"
+                    }`}
+                  >
+                    1
+                  </span>
+                  <span
+                    className={`text-[42px] font-light leading-none ${
+                      countdown === 2 ? "opacity-100" : "opacity-45"
+                    }`}
+                  >
+                    2
+                  </span>
+                  <span
+                    className={`text-[18px] font-light leading-none ${
+                      countdown === 1 ? "opacity-100" : "opacity-45"
+                    }`}
+                  >
+                    3
+                  </span>
                 </div>
+
+                <p className="mt-2 text-[11px] font-normal uppercase tracking-[0.04em] text-white">
+                  Hold still
+                </p>
+              </div>
+            )}
+
+            {capturedImage && showGreatShot && (
+              <div className="absolute left-1/2 top-[174px] -translate-x-1/2 text-center">
+                <p className="text-[11px] font-normal uppercase tracking-[0.04em] text-white">
+                  Great Shot!
+                </p>
               </div>
             )}
           </div>
@@ -297,37 +333,45 @@ export default function CameraPage() {
           </div>
 
           <div className="absolute left-4 top-1/2 z-20 -translate-y-1/2 md:left-10">
-            <div className="flex items-center gap-5 rounded-full bg-white/10 px-4 py-3 text-[12px] uppercase tracking-[0.04em] text-white backdrop-blur-[1px]">
-              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/45 text-[18px]">
+            {showTimerBar ? (
+              <div className="flex items-center gap-5 rounded-full bg-white/10 px-4 py-3 text-[12px] uppercase tracking-[0.04em] text-white backdrop-blur-[1px]">
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/45 text-[18px]">
+                    ⏱
+                  </span>
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => setTimerMode(0)}
+                  className={timerMode === 0 ? "text-white" : "text-white/55"}
+                >
+                  Off
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setTimerMode(3)}
+                  className={timerMode === 3 ? "text-white" : "text-white/55"}
+                >
+                  3s
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setTimerMode(10)}
+                  className={timerMode === 10 ? "text-white" : "text-white/55"}
+                >
+                  10s
+                </button>
+              </div>
+            ) : (
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/45 text-[18px] text-white">
                   ⏱
                 </span>
-              </span>
-
-              <button
-                type="button"
-                onClick={() => setTimerMode(0)}
-                className={timerMode === 0 ? "text-white" : "text-white/55"}
-              >
-                Off
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setTimerMode(3)}
-                className={timerMode === 3 ? "text-white" : "text-white/55"}
-              >
-                3s
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setTimerMode(10)}
-                className={timerMode === 10 ? "text-white" : "text-white/55"}
-              >
-                10s
-              </button>
-            </div>
+              </div>
+            )}
           </div>
 
           <div className="absolute right-4 top-1/2 z-20 -translate-y-1/2 md:right-10">
