@@ -11,19 +11,27 @@ export default function CameraPage() {
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const hasAutoOpenedRef = useRef(false);
 
   const [step, setStep] = useState<CameraStep>("permission");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [timerMode, setTimerMode] = useState<0 | 3 | 10>(0);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [cameraError, setCameraError] = useState<string>("");
 
   useEffect(() => {
+    const approved = localStorage.getItem("skinstricCameraApproved");
+
+    if (approved === "true" && !hasAutoOpenedRef.current) {
+      hasAutoOpenedRef.current = true;
+      localStorage.removeItem("skinstricCameraApproved");
+      void openCamera();
+    }
+
     return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-        streamRef.current = null;
-      }
+      stopCurrentStream();
     };
   }, []);
 
@@ -43,16 +51,30 @@ export default function CameraPage() {
     return () => window.clearTimeout(timer);
   }, [countdown]);
 
+  function stopCurrentStream() {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.srcObject = null;
+    }
+  }
+
   async function openCamera() {
     try {
+      stopCurrentStream();
+      setCameraError("");
       setStep("loading");
 
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Camera API not supported in this browser.");
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "user",
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
+        video: true,
         audio: false,
       });
 
@@ -68,12 +90,19 @@ export default function CameraPage() {
 
         try {
           await videoRef.current.play();
-        } catch {}
+        } catch (playError: any) {
+          throw new Error(
+            playError?.message || "Could not play camera stream.",
+          );
+        }
 
         setStep("camera");
-      }, 1200);
-    } catch (error) {
-      console.error(error);
+      }, 600);
+    } catch (error: any) {
+      console.error("openCamera failed:", error);
+      setCameraError(
+        `${error?.name || "CameraError"}: ${error?.message || "Unable to access camera"}`,
+      );
       setStep("error");
     }
   }
@@ -123,6 +152,30 @@ export default function CameraPage() {
 
   function handleProceed() {
     router.push("/analysis");
+  }
+
+  function handleOpenFilePicker() {
+    fileInputRef.current?.click();
+  }
+
+  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : null;
+      if (!result) return;
+
+      setCapturedImage(result);
+
+      try {
+        localStorage.setItem("skinstricCapturedImage", result);
+      } catch {}
+    };
+
+    reader.readAsDataURL(file);
   }
 
   return (
@@ -384,16 +437,40 @@ export default function CameraPage() {
               Unable to access camera
             </p>
 
-            <button
-              type="button"
-              onClick={() => setStep("permission")}
-              className="mt-4 border border-black px-4 py-2 text-[11px] uppercase tracking-[0.04em]"
-            >
-              Try again
-            </button>
+            <p className="mt-2 max-w-[280px] text-[11px] leading-4 text-black/70">
+              {cameraError ||
+                "Live camera could not be started on this device."}
+            </p>
+
+            <div className="mt-4 flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={openCamera}
+                className="border border-black px-4 py-2 text-[11px] uppercase tracking-[0.04em]"
+              >
+                Try live camera again
+              </button>
+
+              <button
+                type="button"
+                onClick={handleOpenFilePicker}
+                className="border border-black px-4 py-2 text-[11px] uppercase tracking-[0.04em]"
+              >
+                Use device camera / upload photo
+              </button>
+            </div>
           </div>
         </div>
       )}
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="user"
+        onChange={handleFileChange}
+        className="hidden"
+      />
 
       <canvas ref={canvasRef} className="hidden" />
     </main>

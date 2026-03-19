@@ -1,12 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import gsap from "gsap";
 
 export default function ResultPage() {
   const router = useRouter();
+  const [showPermission, setShowPermission] = useState(false);
 
   const pageRef = useRef<HTMLDivElement | null>(null);
 
@@ -82,7 +83,7 @@ export default function ResultPage() {
             {/* LEFT BLOCK */}
             <button
               type="button"
-              onClick={() => router.push("/camera")}
+              onClick={() => setShowPermission(true)}
               className="group relative h-[min(58vh,460px)] w-full cursor-pointer bg-transparent"
             >
               <div className="absolute left-[46%] top-1/2 h-[min(46vh,360px)] w-[min(46vh,360px)] -translate-x-1/2 -translate-y-1/2">
@@ -114,7 +115,7 @@ export default function ResultPage() {
                 />
               </div>
 
-              <div className="absolute left-[48%] top-[38%] transition-all duration-300 ease-out group-hover:opacity-100">
+              <div className="absolute left-[48%] top-[28%] transition-all duration-300 ease-out group-hover:opacity-100">
                 <svg
                   viewBox="0 0 86 62"
                   className="h-[46px] w-[64px] md:h-[54px] md:w-[76px]"
@@ -123,15 +124,15 @@ export default function ResultPage() {
                   <line
                     x1="9"
                     y1="54"
-                    x2="74"
-                    y2="6"
+                    x2="78"
+                    y2="12"
                     stroke="#1A1B1C"
                     strokeWidth="1.4"
                     className="transition-all duration-300"
                   />
                   <circle
-                    cx="78"
-                    cy="4"
+                    cx="82"
+                    cy="10"
                     r="3"
                     fill="#F4F4F2"
                     stroke="#1A1B1C"
@@ -141,7 +142,7 @@ export default function ResultPage() {
                 </svg>
               </div>
 
-              <div className="absolute left-[60%] top-[35%] text-left transition-all duration-300 ease-out group-hover:translate-x-[2px]">
+              <div className="absolute left-[60%] top-[25.5%] text-left transition-all duration-300 ease-out group-hover:translate-x-[2px]">
                 <p className="text-[11px] font-normal uppercase leading-[1.45] tracking-[0.01em] text-[#1A1B1C] md:text-[13px]">
                   Allow A.I.
                   <br />
@@ -225,6 +226,52 @@ export default function ResultPage() {
             </div>
           </div>
         </section>
+
+        {showPermission && (
+          <div className="absolute inset-0 z-40">
+            <div
+              className="absolute inset-0 bg-black/0"
+              onClick={() => setShowPermission(false)}
+            />
+
+            <div
+              className="absolute md:top-[50%] md:left-[420px] z-50 w-[352px]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="bg-[#1A1B1C] pt-4 pb-2">
+                <h2 className="mb-12 pl-4 text-base font-semibold leading-[24px] text-[#FCFCFC]">
+                  ALLOW A.I. TO ACCESS YOUR CAMERA
+                </h2>
+
+                <div className="mt-4 flex border-t border-[#FCFCFC] pt-2">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowPermission(false);
+                    }}
+                    className="cursor-pointer px-7 text-sm font-normal leading-4 tracking-tight text-[#fcfcfca1] hover:text-gray-500"
+                  >
+                    DENY
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      localStorage.setItem("skinstricCameraApproved", "true");
+                      setShowPermission(false);
+                      router.push("/camera");
+                    }}
+                    className="px-5 text-sm font-semibold leading-4 tracking-tight text-[#FCFCFC] cursor-pointer hover:text-gray-300"
+                  >
+                    ALLOW
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <button
           type="button"
