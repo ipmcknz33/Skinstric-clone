@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import gsap from "gsap";
 
 type HoverSide = "left" | "right" | null;
 
 export default function HomePage() {
+  const router = useRouter();
   const titleRef = useRef<HTMLHeadingElement | null>(null);
   const [hoverSide, setHoverSide] = useState<HoverSide>(null);
 
@@ -60,6 +62,10 @@ export default function HomePage() {
     });
   }, [hoverSide]);
 
+  const goToTest = () => {
+    router.push("/test");
+  };
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#f4f4f2] text-black">
       <header className="absolute top-0 left-0 z-30 flex w-full items-start justify-between px-6 py-5">
@@ -83,7 +89,7 @@ export default function HomePage() {
           <div className="absolute left-0 top-1/2 h-[1px] w-full origin-left -rotate-45 bg-black/20" />
 
           <div className="absolute left-12 top-1/2 flex -translate-y-1/2 items-center gap-3">
-            <div className="relative flex h-8 w-8 items-center justify-center border border-black rotate-45">
+            <div className="relative flex h-8 w-8 rotate-45 items-center justify-center border border-black">
               <span className="absolute -rotate-45 text-[11px] leading-none">
                 ◀
               </span>
@@ -93,23 +99,26 @@ export default function HomePage() {
         </div>
 
         {/* RIGHT HOVER ZONE */}
-        <div
+        <button
+          type="button"
+          aria-label="Take Test"
           className="absolute right-0 top-1/2 z-20 hidden h-[500px] w-[18vw] -translate-y-1/2 cursor-pointer md:block"
           onMouseEnter={() => setHoverSide("right")}
           onMouseLeave={() => setHoverSide(null)}
+          onClick={goToTest}
         >
           <div className="absolute right-0 top-1/2 h-[1px] w-full origin-right -rotate-45 bg-black/20" />
           <div className="absolute right-0 top-1/2 h-[1px] w-full origin-right rotate-45 bg-black/20" />
 
           <div className="absolute right-12 top-1/2 flex -translate-y-1/2 items-center gap-3">
             <span className="text-[12px] uppercase">Take Test</span>
-            <div className="relative flex h-8 w-8 items-center justify-center border border-black rotate-45">
+            <div className="relative flex h-8 w-8 rotate-45 items-center justify-center border border-black">
               <span className="absolute -rotate-45 text-[11px] leading-none">
                 ▶
               </span>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* TITLE */}
         <h1
@@ -126,6 +135,15 @@ export default function HomePage() {
           Skinstric developed an A.I. that creates a highly-personalized routine
           tailored to what your skin needs.
         </div>
+
+        {/* Mobile CTA */}
+        <button
+          type="button"
+          onClick={goToTest}
+          className="absolute bottom-10 right-6 border border-black px-4 py-3 text-[11px] uppercase tracking-[0.08em] transition hover:bg-black hover:text-white md:hidden"
+        >
+          Take Test
+        </button>
       </section>
     </main>
   );
