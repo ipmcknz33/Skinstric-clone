@@ -1,4 +1,3 @@
-// app/camera/page.tsx
 "use client";
 
 import Image from "next/image";
@@ -6,6 +5,12 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type CameraStep = "permission" | "loading" | "camera" | "error";
+
+const STORAGE_KEYS = {
+  capturedImage: "skinstricCapturedImage",
+  phaseTwoResponse: "skinstricPhaseTwoResponse",
+  phaseTwoError: "skinstricPhaseTwoError",
+};
 
 export default function CameraPage() {
   const router = useRouter();
@@ -52,6 +57,13 @@ export default function CameraPage() {
 
     return () => window.clearTimeout(timer);
   }, [countdown]);
+
+  function clearPreviousAnalysisState() {
+    try {
+      localStorage.removeItem(STORAGE_KEYS.phaseTwoResponse);
+      localStorage.removeItem(STORAGE_KEYS.phaseTwoError);
+    } catch {}
+  }
 
   function stopCurrentStream() {
     if (streamRef.current) {
@@ -138,7 +150,8 @@ export default function CameraPage() {
     setShowGreatShot(true);
 
     try {
-      localStorage.setItem("skinstricCapturedImage", dataUrl);
+      clearPreviousAnalysisState();
+      localStorage.setItem(STORAGE_KEYS.capturedImage, dataUrl);
     } catch {}
   }
 
@@ -182,7 +195,8 @@ export default function CameraPage() {
       setShowGreatShot(true);
 
       try {
-        localStorage.setItem("skinstricCapturedImage", result);
+        clearPreviousAnalysisState();
+        localStorage.setItem(STORAGE_KEYS.capturedImage, result);
       } catch {}
     };
 

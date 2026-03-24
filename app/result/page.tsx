@@ -222,7 +222,12 @@ export default function ResultPage() {
             {/* PREVIEW */}
             <div className="self-start -ml-[50px] pt-[50px]">
               <p className="mb-2 text-[12px] text-black/80">Preview</p>
-              <div className="h-[105px] w-[105px] border border-black/10 bg-transparent" />
+              <button
+                type="button"
+                onClick={() => router.push("/demographics")}
+                aria-label="Open demographics page"
+                className="block h-[105px] w-[105px] border border-black/10 bg-transparent"
+              />
             </div>
           </div>
         </section>
