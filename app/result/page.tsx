@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import gsap from "gsap";
 
@@ -18,6 +18,25 @@ export default function ResultPage() {
   const rightARef = useRef<HTMLDivElement | null>(null);
   const rightBRef = useRef<HTMLDivElement | null>(null);
   const rightCRef = useRef<HTMLDivElement | null>(null);
+
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleGallerySelect = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        localStorage.setItem("skinstricCapturedImage", reader.result);
+        router.push("/analysis");
+      }
+    };
+
+    reader.readAsDataURL(file);
+    event.target.value = "";
+  };
 
   useEffect(() => {
     if (!pageRef.current) return;
@@ -61,6 +80,13 @@ export default function ResultPage() {
   return (
     <main className="h-screen overflow-hidden bg-[#f4f4f2] text-[#1A1B1C]">
       <div ref={pageRef} className="relative h-screen overflow-hidden">
+        <input
+          ref={galleryInputRef}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={handleGallerySelect}
+        />
         <header className="absolute left-0 top-0 z-30 flex w-full items-start justify-between px-3 py-2">
           <div className="text-[11px] font-semibold uppercase tracking-[0.06em]">
             Skinstric{" "}
@@ -154,6 +180,7 @@ export default function ResultPage() {
             {/* RIGHT BLOCK */}
             <button
               type="button"
+              onClick={() => galleryInputRef.current?.click()}
               className="group relative h-[min(58vh,460px)] w-full cursor-pointer bg-transparent"
             >
               <div className="absolute left-[54%] top-1/2 h-[min(46vh,360px)] w-[min(46vh,360px)] -translate-x-1/2 -translate-y-1/2">

@@ -8,6 +8,7 @@ type CameraStep = "permission" | "loading" | "camera" | "error";
 
 const STORAGE_KEYS = {
   capturedImage: "skinstricCapturedImage",
+  savedPhotos: "skinstricSavedPhotos",
   phaseTwoResponse: "skinstricPhaseTwoResponse",
   phaseTwoError: "skinstricPhaseTwoError",
 };
@@ -17,7 +18,6 @@ export default function CameraPage() {
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const hasAutoOpenedRef = useRef(false);
 
@@ -62,6 +62,24 @@ export default function CameraPage() {
     try {
       localStorage.removeItem(STORAGE_KEYS.phaseTwoResponse);
       localStorage.removeItem(STORAGE_KEYS.phaseTwoError);
+    } catch {}
+  }
+
+  function savePhotoToBank(imageDataUrl: string) {
+    try {
+      const existingRaw = localStorage.getItem(STORAGE_KEYS.savedPhotos);
+      const existing = existingRaw ? (JSON.parse(existingRaw) as string[]) : [];
+      const deduped = existing.filter((item) => item !== imageDataUrl);
+      const updated = [imageDataUrl, ...deduped].slice(0, 24);
+      localStorage.setItem(STORAGE_KEYS.savedPhotos, JSON.stringify(updated));
+    } catch {}
+  }
+
+  function persistSelectedImage(imageDataUrl: string) {
+    try {
+      clearPreviousAnalysisState();
+      localStorage.setItem(STORAGE_KEYS.capturedImage, imageDataUrl);
+      savePhotoToBank(imageDataUrl);
     } catch {}
   }
 
@@ -148,11 +166,7 @@ export default function CameraPage() {
     const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
     setCapturedImage(dataUrl);
     setShowGreatShot(true);
-
-    try {
-      clearPreviousAnalysisState();
-      localStorage.setItem(STORAGE_KEYS.capturedImage, dataUrl);
-    } catch {}
+    persistSelectedImage(dataUrl);
   }
 
   function handleTakePicture() {
@@ -177,10 +191,6 @@ export default function CameraPage() {
     router.push("/analysis");
   }
 
-  function handleOpenFilePicker() {
-    fileInputRef.current?.click();
-  }
-
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -191,16 +201,15 @@ export default function CameraPage() {
       const result = typeof reader.result === "string" ? reader.result : null;
       if (!result) return;
 
+      stopCurrentStream();
       setCapturedImage(result);
       setShowGreatShot(true);
-
-      try {
-        clearPreviousAnalysisState();
-        localStorage.setItem(STORAGE_KEYS.capturedImage, result);
-      } catch {}
+      setStep("camera");
+      persistSelectedImage(result);
     };
 
     reader.readAsDataURL(file);
+    event.target.value = "";
   }
 
   const showCameraUi = step === "camera" || !!capturedImage;
@@ -232,8 +241,6 @@ export default function CameraPage() {
         />
       )}
 
-      {!showCameraUi && <div className="absolute inset-0 bg-[#cfcfcb]" />}
-
       <header className="absolute left-0 top-0 z-20 flex w-full items-start justify-between px-3 py-2">
         <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-white/85">
           Skinstric{" "}
@@ -250,20 +257,6 @@ export default function CameraPage() {
               className="absolute inset-0 h-full w-full"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <defs>
-                <mask id="screen-oval-hole">
-                  <rect width="100" height="100" fill="grey" />
-                  <ellipse cx="50" cy="50" rx="13.5" ry="33" fill="black" />
-                </mask>
-              </defs>
-
-              <rect
-                width="100"
-                height="100"
-                fill="rgba(207,207,203,0.72)"
-                mask="url(#screen-oval-hole)"
-              />
-
               <ellipse
                 cx="50"
                 cy="50"
@@ -390,19 +383,38 @@ export default function CameraPage() {
 
           <div className="absolute right-4 top-1/2 z-20 -translate-y-1/2 md:right-10">
             {!capturedImage ? (
-              <button
-                type="button"
-                onClick={handleTakePicture}
-                disabled={countdown !== null}
-                className="inline-flex items-center gap-4 text-[12px] uppercase tracking-[0.04em] text-white disabled:opacity-50"
-              >
-                Take picture
-                <span className="flex h-14 w-14 items-center justify-center rounded-full border border-white/80">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/60 text-[18px]">
-                    📷
+              <div className="flex flex-col items-end gap-6">
+                <div className="relative inline-flex items-center gap-4 text-[12px] uppercase tracking-[0.04em] text-white">
+                  <span>Gallery</span>
+                  <span className="pointer-events-none flex h-14 w-14 items-center justify-center rounded-full border border-white/80">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/60 text-[18px]">
+                      🖼
+                    </span>
                   </span>
-                </span>
-              </button>
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="absolute inset-0 z-30 cursor-pointer opacity-0"
+                    aria-label="Open gallery"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleTakePicture}
+                  disabled={countdown !== null}
+                  className="inline-flex items-center gap-4 text-[12px] uppercase tracking-[0.04em] text-white disabled:opacity-50"
+                >
+                  Take picture
+                  <span className="flex h-14 w-14 items-center justify-center rounded-full border border-white/80">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/60 text-[18px]">
+                      📷
+                    </span>
+                  </span>
+                </button>
+              </div>
             ) : (
               <div className="flex flex-col items-end gap-6">
                 <button
@@ -480,7 +492,7 @@ export default function CameraPage() {
                 </div>
 
                 <p className="mt-4 text-[12px] font-semibold uppercase tracking-[0.04em] text-black">
-                  Setting up camera ...
+                  Setting up camera .
                 </p>
               </div>
             </div>
@@ -521,26 +533,20 @@ export default function CameraPage() {
                 Try live camera again
               </button>
 
-              <button
-                type="button"
-                onClick={handleOpenFilePicker}
-                className="border border-black px-4 py-2 text-[11px] uppercase tracking-[0.04em]"
-              >
-                Use device camera / upload photo
-              </button>
+              <div className="relative border border-black px-4 py-2 text-[11px] uppercase tracking-[0.04em]">
+                <span>Use gallery / upload photo</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="absolute inset-0 cursor-pointer opacity-0"
+                  aria-label="Use gallery or upload photo"
+                />
+              </div>
             </div>
           </div>
         </div>
       )}
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        capture="user"
-        onChange={handleFileChange}
-        className="hidden"
-      />
 
       <canvas ref={canvasRef} className="hidden" />
     </main>
