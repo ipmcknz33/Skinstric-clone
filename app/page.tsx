@@ -123,7 +123,7 @@ export default function HomePage() {
         {/* TITLE */}
         <h1
           ref={titleRef}
-          className="text-center text-[60px] font-normal leading-[0.95] tracking-[-0.05em] md:text-[110px] lg:text-[130px]"
+          className="text-center text-[40px] font-normal leading-[0.95] tracking-[-0.05em] md:text-[80px] lg:text-[130px]"
         >
           Sophisticated
           <br />
