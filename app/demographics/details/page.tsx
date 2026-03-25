@@ -465,6 +465,7 @@ export default function DemographicsDetailsPage() {
         </section>
 
         <div className="absolute bottom-[28px] left-[25px] right-[25px] flex items-end justify-between">
+          {/* BACK */}
           <button
             type="button"
             onClick={() => router.push("/demographics")}
@@ -480,26 +481,26 @@ export default function DemographicsDetailsPage() {
             </span>
           </button>
 
+          {/* CENTER TEXT */}
           <div className="absolute left-1/2 top-[2px] -translate-x-1/2 text-[12px] text-black/30">
             If A.I. estimate is wrong, select the correct one.
           </div>
 
-          <div className="flex items-center gap-[8px]">
-            <button
-              type="button"
-              onClick={handleReset}
-              className="h-[26px] border border-[#7f7f7f] px-[16px] text-[11px] font-medium uppercase tracking-[0.02em]"
-            >
-              RESET
-            </button>
-            <button
-              type="button"
-              onClick={handleConfirm}
-              className="h-[26px] bg-[#17181c] px-[16px] text-[11px] font-medium uppercase tracking-[0.02em] text-white"
-            >
-              CONFIRM
-            </button>
-          </div>
+          {/* HOME (replaces RESET + CONFIRM) */}
+          <button
+            type="button"
+            onClick={() => router.push("/")}
+            className="flex items-center gap-[14px]"
+          >
+            <div className="relative flex h-[28px] w-[28px] rotate-45 items-center justify-center border border-[#2d2d2d]">
+              <span className="absolute -rotate-45 text-[11px] leading-none">
+                ▶
+              </span>
+            </div>
+            <span className="text-[12px] uppercase tracking-[0.02em]">
+              HOME
+            </span>
+          </button>
         </div>
       </div>
     </main>

@@ -132,6 +132,7 @@ export default function DemographicsPage() {
   const router = useRouter();
   const [data, setData] = useState<PhaseTwoData>(null);
   const [activeSection, setActiveSection] = useState("demographics");
+  const [hoveredDiamond, setHoveredDiamond] = useState<number | null>(null);
 
   useEffect(() => {
     const stored = safeParse(localStorage.getItem("skinstricPhaseTwoResponse"));
@@ -186,6 +187,15 @@ export default function DemographicsPage() {
     }
   };
 
+  const hoverSquareClass =
+    hoveredDiamond === 0
+      ? "h-[300px] w-[300px] border-[#4a4a4a] opacity-100"
+      : hoveredDiamond === 1
+        ? "h-[330px] w-[330px] border-[#3f3f3f] opacity-100"
+        : hoveredDiamond === 2
+          ? "h-[356px] w-[356px] border-[#343434] opacity-100"
+          : "h-0 w-0 border-transparent opacity-0";
+
   return (
     <main className="relative h-screen overflow-hidden bg-[#f4f4f2] text-[#1A1B1C]">
       <div className="absolute left-0 top-0 z-50 h-[4px] w-full bg-[#222222]" />
@@ -218,8 +228,14 @@ export default function DemographicsPage() {
             <div className="absolute left-1/2 top-1/2 h-[240px] w-[240px] -translate-x-1/2 -translate-y-1/2 rotate-45 border border-dashed border-[#bdbdbb]" />
 
             <div className="absolute left-1/2 top-1/2 h-[328px] w-[328px] -translate-x-1/2 -translate-y-1/2">
+              <div
+                className={`pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rotate-45 border-[1.5px] transition-all duration-200 ease-out ${hoverSquareClass}`}
+              />
+
               <button
                 type="button"
+                onMouseEnter={() => setHoveredDiamond(0)}
+                onMouseLeave={() => setHoveredDiamond(null)}
                 onClick={() => goSection("demographics")}
                 className={`absolute left-1/2 top-0 flex h-[130px] w-[130px] -translate-x-1/2 rotate-45 items-center justify-center transition-colors duration-200 ${
                   activeSection === "demographics"
@@ -234,6 +250,8 @@ export default function DemographicsPage() {
 
               <button
                 type="button"
+                onMouseEnter={() => setHoveredDiamond(1)}
+                onMouseLeave={() => setHoveredDiamond(null)}
                 onClick={() => goSection("cosmetic")}
                 className={`absolute left-0 top-1/2 flex h-[130px] w-[130px] -translate-y-1/2 rotate-45 items-center justify-center transition-colors duration-200 ${
                   activeSection === "cosmetic" ? "bg-[#bfc2c7]" : "bg-[#e3e3e6]"
@@ -248,6 +266,8 @@ export default function DemographicsPage() {
 
               <button
                 type="button"
+                onMouseEnter={() => setHoveredDiamond(1)}
+                onMouseLeave={() => setHoveredDiamond(null)}
                 onClick={() => goSection("skin")}
                 className={`absolute right-0 top-1/2 flex h-[130px] w-[130px] -translate-y-1/2 rotate-45 items-center justify-center transition-colors duration-200 ${
                   activeSection === "skin" ? "bg-[#bfc2c7]" : "bg-[#e3e3e6]"
@@ -260,6 +280,8 @@ export default function DemographicsPage() {
 
               <button
                 type="button"
+                onMouseEnter={() => setHoveredDiamond(2)}
+                onMouseLeave={() => setHoveredDiamond(null)}
                 onClick={() => goSection("weather")}
                 className={`absolute bottom-0 left-1/2 flex h-[130px] w-[130px] -translate-x-1/2 rotate-45 items-center justify-center transition-colors duration-200 ${
                   activeSection === "weather" ? "bg-[#bfc2c7]" : "bg-[#e3e3e6]"

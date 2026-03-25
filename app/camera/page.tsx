@@ -385,12 +385,7 @@ export default function CameraPage() {
             {!capturedImage ? (
               <div className="flex flex-col items-end gap-6">
                 <div className="relative inline-flex items-center gap-4 text-[12px] uppercase tracking-[0.04em] text-white">
-                  <span>Gallery</span>
-                  <span className="pointer-events-none flex h-14 w-14 items-center justify-center rounded-full border border-white/80">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/60 text-[18px]">
-                      🖼
-                    </span>
-                  </span>
+                  
 
                   <input
                     type="file"
