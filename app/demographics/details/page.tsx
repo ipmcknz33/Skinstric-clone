@@ -19,6 +19,8 @@ type DemographicSummary = {
   raceList: RaceItem[];
 };
 
+type DetailTab = "race" | "age" | "sex";
+
 function safeParse(data: string | null): PhaseTwoData {
   if (!data) return null;
 
@@ -231,16 +233,14 @@ function buildSummary(data: PhaseTwoData): DemographicSummary {
     "Middle Eastern",
   ];
 
-  raceList = preferredOrder
+  const orderedRaceList = preferredOrder
     .map((label) => raceList.find((item) => item.label === label))
     .filter(Boolean) as RaceItem[];
 
-  if (!raceList.length) {
-    raceList = fallbackRaceList;
-  }
+  raceList = orderedRaceList.length ? orderedRaceList : fallbackRaceList;
 
-  const topRace = raceList[0]?.label ?? "East Asian";
-  const topRacePercent = raceList[0]?.value ?? 96;
+  const topRaceItem =
+    [...raceList].sort((a, b) => b.value - a.value)[0] ?? fallbackRaceList[0];
 
   const fallbackAge =
     typeof window !== "undefined"
@@ -263,12 +263,24 @@ function buildSummary(data: PhaseTwoData): DemographicSummary {
     "Female";
 
   return {
-    topRace,
-    topRacePercent,
+    topRace: topRaceItem.label,
+    topRacePercent: topRaceItem.value,
     age: ageRaw,
     sex: titleCase(sexRaw),
     raceList,
   };
+}
+
+function getTabValue(tab: DetailTab, summary: DemographicSummary): string {
+  if (tab === "race") return summary.topRace;
+  if (tab === "age") return summary.age;
+  return summary.sex;
+}
+
+function getTabLabel(tab: DetailTab): string {
+  if (tab === "race") return "RACE";
+  if (tab === "age") return "AGE";
+  return "SEX";
 }
 
 export default function DemographicsDetailsPage() {
@@ -289,6 +301,8 @@ export default function DemographicsDetailsPage() {
       { label: "Middle Eastern", value: 0 },
     ],
   });
+  const [activeTab, setActiveTab] = useState<DetailTab>("race");
+  const [selectedRaceLabel, setSelectedRaceLabel] = useState<string>("");
 
   useEffect(() => {
     setPhaseTwoData(
@@ -306,6 +320,18 @@ export default function DemographicsDetailsPage() {
   }, [derivedSummary]);
 
   useEffect(() => {
+    const highestRace =
+      [...summary.raceList].sort((a, b) => b.value - a.value)[0]?.label ??
+      summary.topRace;
+
+    setSelectedRaceLabel((current) =>
+      current && summary.raceList.some((item) => item.label === current)
+        ? current
+        : highestRace,
+    );
+  }, [summary]);
+
+  useEffect(() => {
     localStorage.setItem("skinstricActiveSection", "demographics");
     localStorage.setItem(
       "skinstricDemographicsSummary",
@@ -313,23 +339,27 @@ export default function DemographicsDetailsPage() {
     );
   }, [summary]);
 
-  const handleReset = () => {
-    setSummary(derivedSummary);
-  };
+  const selectedRace = summary.raceList.find(
+    (item) => item.label === selectedRaceLabel,
+  ) ??
+    [...summary.raceList].sort((a, b) => b.value - a.value)[0] ?? {
+      label: summary.topRace,
+      value: summary.topRacePercent,
+    };
 
-  const handleConfirm = () => {
-    localStorage.setItem(
-      "skinstricDemographicsConfirmed",
-      JSON.stringify(summary),
-    );
-    router.push("/summary-processing");
-  };
+  const displayTitle =
+    activeTab === "race"
+      ? selectedRace.label.toLowerCase()
+      : getTabValue(activeTab, summary).toLowerCase();
+
+  const displayPercent =
+    activeTab === "race" ? selectedRace.value : summary.topRacePercent;
 
   return (
-    <main className="relative h-screen overflow-hidden bg-[#f3f3f1] text-[#1a1a1a]">
+    <main className="relative min-h-screen bg-[#f3f3f1] text-[#1a1a1a]">
       <div className="absolute left-0 top-0 z-50 h-[4px] w-full bg-[#202020]" />
 
-      <div className="relative h-full w-full px-[25px] pt-[22px]">
+      <div className="relative min-h-screen w-full px-4 pb-[110px] pt-[22px] sm:px-[25px]">
         <header className="flex items-center gap-[10px]">
           <div className="text-[11px] font-semibold uppercase tracking-[0.04em]">
             SKINSTRIC
@@ -339,17 +369,17 @@ export default function DemographicsDetailsPage() {
           </div>
         </header>
 
-        <div className="absolute left-[25px] top-[58px]">
+        <div className="mt-[24px] sm:mt-[32px]">
           <div className="text-[11px] font-semibold uppercase tracking-[0.03em]">
             A. I. ANALYSIS
           </div>
 
-          <div className="mt-[6px] flex items-start gap-[16px]">
-            <h1 className="text-[62px] font-light uppercase leading-none tracking-[-0.06em] text-[#202020]">
+          <div className="mt-[6px] flex flex-wrap items-start gap-[12px] sm:gap-[16px]">
+            <h1 className="text-[40px] font-light uppercase leading-none tracking-[-0.06em] text-[#202020] sm:text-[52px] lg:text-[62px]">
               DEMOGRAPHICS
             </h1>
 
-            <div className="flex gap-[10px] pt-[6px]">
+            <div className="flex gap-[10px] pt-[4px] sm:pt-[6px]">
               <button
                 type="button"
                 onClick={() => router.push("/demographics")}
@@ -379,54 +409,51 @@ export default function DemographicsDetailsPage() {
           </div>
         </div>
 
-        <section className="absolute left-[25px] right-[25px] top-[205px] bottom-[74px] grid grid-cols-[140px_1fr_298px] gap-[12px]">
-          <div className="flex flex-col gap-[6px]">
-            <button
-              type="button"
-              className="flex h-[68px] flex-col items-start justify-between bg-[#141519] px-[12px] py-[10px] text-left text-white"
-            >
-              <div className="text-[18px] font-medium uppercase leading-none">
-                {summary.topRace}
-              </div>
-              <div className="text-[12px] uppercase tracking-[0.02em] text-white/90">
-                RACE
-              </div>
-            </button>
+        <section className="mt-[26px] grid grid-cols-1 gap-[12px] lg:mt-[34px] lg:grid-cols-[140px_1fr_298px]">
+          <div className="grid grid-cols-1 gap-[6px] sm:grid-cols-3 lg:flex lg:flex-col">
+            {(["race", "age", "sex"] as DetailTab[]).map((tab) => {
+              const active = activeTab === tab;
+              const isRace = tab === "race";
 
-            <button
-              type="button"
-              className="flex h-[68px] flex-col items-start justify-between bg-[#cfcfd1] px-[12px] py-[10px] text-left text-[#1a1a1a]"
-            >
-              <div className="text-[18px] font-medium uppercase leading-none">
-                {summary.age}
-              </div>
-              <div className="text-[12px] uppercase tracking-[0.02em] text-black/80">
-                AGE
-              </div>
-            </button>
-
-            <button
-              type="button"
-              className="flex h-[68px] flex-col items-start justify-between bg-[#e2e2e3] px-[12px] py-[10px] text-left text-[#1a1a1a]"
-            >
-              <div className="text-[18px] font-medium uppercase leading-none">
-                {summary.sex}
-              </div>
-              <div className="text-[12px] uppercase tracking-[0.02em] text-black/80">
-                SEX
-              </div>
-            </button>
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className={`flex h-[68px] flex-col items-start justify-between px-[12px] py-[10px] text-left transition-colors ${
+                    active
+                      ? "bg-[#141519] text-white"
+                      : isRace
+                        ? "bg-[#d7d7d8] text-[#1a1a1a]"
+                        : tab === "age"
+                          ? "bg-[#cfcfd1] text-[#1a1a1a]"
+                          : "bg-[#e2e2e3] text-[#1a1a1a]"
+                  }`}
+                >
+                  <div className="text-[18px] font-medium uppercase leading-none">
+                    {getTabValue(tab, summary)}
+                  </div>
+                  <div
+                    className={`text-[12px] uppercase tracking-[0.02em] ${
+                      active ? "text-white/90" : "text-black/80"
+                    }`}
+                  >
+                    {getTabLabel(tab)}
+                  </div>
+                </button>
+              );
+            })}
           </div>
 
-          <div className="relative border-t border-t-black/40 bg-[#efefef]">
-            <div className="absolute left-[10px] top-[10px] text-[26px] font-normal tracking-[-0.04em] text-[#232323]">
-              {summary.topRace.toLowerCase()}
+          <div className="relative min-h-[340px] border-t border-t-black/40 bg-[#efefef] sm:min-h-[380px] lg:min-h-0">
+            <div className="absolute left-[10px] top-[10px] pr-[10px] text-[22px] font-normal tracking-[-0.04em] text-[#232323] sm:text-[26px]">
+              {displayTitle}
             </div>
 
-            <div className="absolute bottom-[16px] right-[12px] flex h-[258px] w-[258px] items-center justify-center rounded-full border-[3px] border-[#1f1f1f]">
-              <div className="text-[52px] font-light tracking-[-0.05em] text-[#242424]">
-                {summary.topRacePercent}
-                <span className="relative -top-[16px] ml-[2px] text-[22px]">
+            <div className="absolute bottom-[16px] right-1/2 flex h-[210px] w-[210px] translate-x-1/2 items-center justify-center rounded-full border-[3px] border-[#1f1f1f] sm:h-[240px] sm:w-[240px] lg:right-[12px] lg:translate-x-0 lg:h-[258px] lg:w-[258px]">
+              <div className="text-[42px] font-light tracking-[-0.05em] text-[#242424] sm:text-[48px] lg:text-[52px]">
+                {displayPercent}
+                <span className="relative -top-[12px] ml-[2px] text-[18px] sm:-top-[14px] sm:text-[20px] lg:-top-[16px] lg:text-[22px]">
                   %
                 </span>
               </div>
@@ -440,13 +467,18 @@ export default function DemographicsDetailsPage() {
             </div>
 
             <div className="space-y-[2px]">
-              {summary.raceList.map((item, index) => {
-                const selected = index === 0;
+              {summary.raceList.map((item) => {
+                const selected = selectedRace.label === item.label;
 
                 return (
-                  <div
+                  <button
                     key={item.label}
-                    className={`flex items-center justify-between px-[10px] py-[9px] text-[14px] ${
+                    type="button"
+                    onClick={() => {
+                      setSelectedRaceLabel(item.label);
+                      setActiveTab("race");
+                    }}
+                    className={`flex w-full items-center justify-between px-[10px] py-[9px] text-left text-[14px] transition-colors ${
                       selected ? "bg-[#15161a] text-white" : "text-[#242424]"
                     }`}
                   >
@@ -457,19 +489,18 @@ export default function DemographicsDetailsPage() {
                       <span>{item.label}</span>
                     </div>
                     <span>{item.value} %</span>
-                  </div>
+                  </button>
                 );
               })}
             </div>
           </div>
         </section>
 
-        <div className="absolute bottom-[28px] left-[25px] right-[25px] flex items-end justify-between">
-          {/* BACK */}
+        <div className="mt-[18px] flex flex-col items-center gap-[14px] sm:mt-[22px] lg:absolute lg:bottom-[28px] lg:left-[25px] lg:right-[25px] lg:mt-0 lg:flex-row lg:items-end lg:justify-between">
           <button
             type="button"
             onClick={() => router.push("/demographics")}
-            className="flex items-center gap-[14px]"
+            className="order-2 flex items-center gap-[14px] lg:order-1"
           >
             <div className="relative flex h-[28px] w-[28px] rotate-45 items-center justify-center border border-[#2d2d2d]">
               <span className="absolute -rotate-45 text-[11px] leading-none">
@@ -481,16 +512,14 @@ export default function DemographicsDetailsPage() {
             </span>
           </button>
 
-          {/* CENTER TEXT */}
-          <div className="absolute left-1/2 top-[2px] -translate-x-1/2 text-[12px] text-black/30">
+          <div className="order-1 text-center text-[12px] text-black/30 lg:order-2">
             If A.I. estimate is wrong, select the correct one.
           </div>
 
-          {/* HOME (replaces RESET + CONFIRM) */}
           <button
             type="button"
             onClick={() => router.push("/")}
-            className="flex items-center gap-[14px]"
+            className="order-3 flex items-center gap-[14px]"
           >
             <div className="relative flex h-[28px] w-[28px] rotate-45 items-center justify-center border border-[#2d2d2d]">
               <span className="absolute -rotate-45 text-[11px] leading-none">

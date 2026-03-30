@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 
 type CameraStep = "permission" | "loading" | "camera" | "error";
@@ -191,24 +191,27 @@ export default function CameraPage() {
     router.push("/analysis");
   }
 
-  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
 
     reader.onload = () => {
-      const result = typeof reader.result === "string" ? reader.result : null;
-      if (!result) return;
+      const result = reader.result;
+      if (typeof result !== "string") return;
 
       stopCurrentStream();
-      setCapturedImage(result);
-      setShowGreatShot(true);
-      setStep("camera");
+      setCountdown(null);
+      setCameraError("");
+      setShowGreatShot(false);
       persistSelectedImage(result);
+      setCapturedImage(result);
+      router.push("/analysis");
     };
 
     reader.readAsDataURL(file);
+
     event.target.value = "";
   }
 
@@ -251,23 +254,6 @@ export default function CameraPage() {
       {showCameraUi && (
         <>
           <div className="pointer-events-none absolute inset-0 z-10">
-            <svg
-              viewBox="0 0 100 100"
-              preserveAspectRatio="none"
-              className="absolute inset-0 h-full w-full"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <ellipse
-                cx="50"
-                cy="50"
-                rx="13.5"
-                ry="33"
-                fill="none"
-                stroke="rgba(255,255,255,0.95)"
-                strokeWidth="0.18"
-              />
-            </svg>
-
             {showCountdown && (
               <div className="absolute left-1/2 top-[132px] -translate-x-1/2 text-center text-white">
                 <div className="flex items-end justify-center gap-3">
@@ -385,7 +371,12 @@ export default function CameraPage() {
             {!capturedImage ? (
               <div className="flex flex-col items-end gap-6">
                 <div className="relative inline-flex items-center gap-4 text-[12px] uppercase tracking-[0.04em] text-white">
-                  
+                  <span>Open gallery</span>
+                  <span className="flex h-14 w-14 items-center justify-center rounded-full border border-white/80">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/60 text-[18px]">
+                      ⬒
+                    </span>
+                  </span>
 
                   <input
                     type="file"
